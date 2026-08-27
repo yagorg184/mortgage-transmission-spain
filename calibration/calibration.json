@@ -2,7 +2,7 @@
   "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py against calibration/eff_targets.csv.",
   "household": {
     "beta": [
-      0.9530119335,
+      0.9530118919,
       0.9813
     ],
     "pi": [
