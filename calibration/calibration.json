@@ -1,0 +1,77 @@
+{
+  "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py against calibration/eff_targets.csv.",
+  "household": {
+    "beta": [
+      0.9530119335,
+      0.9813
+    ],
+    "pi": [
+      0.971,
+      0.029
+    ],
+    "chi1": 7.51,
+    "sig_eps": 0.346,
+    "ra": 0.0349,
+    "fixed": {
+      "eis": 0.5,
+      "rb": 0.0,
+      "chi0": 0.25,
+      "chi2": 2.0,
+      "rho_z": 0.9831,
+      "sig_eta": 0.072
+    },
+    "grid": {
+      "nB": 30,
+      "nA": 40,
+      "nK": 4,
+      "nZ": 5,
+      "nEps": 3,
+      "bmax": 50,
+      "amax": 80,
+      "kmax": 1
+    },
+    "targets": {
+      "liquid_income_p50": 0.2632,
+      "illiquid_income_p50": 3.5555,
+      "htm_share": 0.22,
+      "mpc_annual": 0.25
+    },
+    "achieved": {
+      "liquid_income_p50": 0.2605,
+      "illiquid_income_p50": 3.5381,
+      "htm_share": 0.2189,
+      "mpc_gradient": 0.2522
+    },
+    "loss": 0.00021,
+    "_note_precision": "beta_modal is stored to 6 decimals: household wealth is steep in the discount factor, so a 4th-decimal change moves the illiquid moment by ~0.5."
+  },
+  "mortgage": {
+    "mortgage_share": 0.2765,
+    "variable_share": 0.7036,
+    "M_var_income_exposed": 1.4385,
+    "rate_level": 0.0206,
+    "spread_over_euribor_2022": 0.0097,
+    "term_years": 14.0,
+    "amort": 0.03
+  },
+  "incidence": {
+    "beta_dep": 0.32,
+    "mpc_shareholder": 0.05,
+    "lambda_ext": 0.5
+  },
+  "country_variable_share_stock_2022": {
+    "_source": "Spain: EFF 2022. Euro area: ECB (2025, pure-ARM stock ~25%). Germany/Italy/France: ~2022, consistent with the ECB ordering and the HFCS cross-country ranking (Ehrmann-Ziegelmeyer, ECB WP 1631). See docs/sources.md.",
+    "all_fixed": 0.0,
+    "Germany": 0.12,
+    "France": 0.12,
+    "euro_area": 0.25,
+    "Italy": 0.45,
+    "Spain": 0.7,
+    "all_variable": 1.0
+  },
+  "notes": [
+    "Steady-state mortgage payment uses the measured rate_level; spread_over_euribor_2022 is the margin over Euribor, used only in the incidence narrative.",
+    "Germany's counterfactual uses the ECB MIR / ESRB stock variable-rate share (0.12).",
+    "The illiquid moment is steep in beta_modal (stored to 10 decimals); see household._note_precision."
+  ]
+}

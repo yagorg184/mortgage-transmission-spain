@@ -1,0 +1,14 @@
+# Python dependencies for the model and the macro SVAR.
+# Tested with the versions in parentheses; newer minor releases are generally fine.
+numpy>=1.24            # (tested 2.4.4)
+scipy>=1.10            # (tested 1.17.1)
+pandas>=1.5            # (tested 3.0.2)
+numba>=0.57            # (tested 0.67.0) — required by sequence-jacobian
+sequence-jacobian      # sequence-space Jacobian toolkit (Auclert et al.)
+statsmodels>=0.14      # (tested 0.14.6) — SVAR seasonal adjustment
+matplotlib>=3.6        # (tested 3.10.9)
+openpyxl>=3.1          # (tested 3.1.5) — Eurostat/ECB .xlsx
+xlrd>=2.0              # (tested 2.0.2) — legacy .xls (Brent, shadow rate)
+
+# The EFF pipeline is in R and needs: R >= 4.3 and data.table (tested 1.14.10).
+# Install with:  install.packages("data.table")

@@ -1,0 +1,27 @@
+key,value,se,n,unit,role,model_object,definition
+liquid_income_p50,0.2632,0.0128,6371,ratio,target,liquid-asset target (chi1 / beta split),median liquid assets / annual income
+illiquid_income_p50,3.5555,0.0948,6371,ratio,target,illiquid-asset target (ra),median illiquid net wealth / annual income
+htm_share,0.22,0.0073,6371,share,target,hand-to-mouth share (beta heterogeneity),liquid <= income/24
+mpc_annual,0.25,,,ratio,target (external),sigma_eps in SMM,"NOT from the EFF: HANK calibration norm (Kaplan-Violante, 0.15-0.25), consistent with the 22% HtM; HFCS direct survey is higher (~0.5). See docs/sources.md"
+mortgage_share,0.2765,0.0077,6385,share,input,mortgage prevalence,households with dwelling debt
+variable_share_among_mortgaged,0.7036,0.0155,1571,share,input,PVAR (variable-rate share),variable-rate share of the mortgaged stock
+Mvar_income_p50_exposed,1.4385,0.0562,1105,ratio,input,MV (exposure),median variable balance / income among exposed
+mortgage_rate_level_p50,2.064,0.2195,1105,% p.a.,input,mortgage rate level (NOT a spread),"median current interest rate, variable/mixed loans (p2_13)"
+mortgage_term_p50,14,0.3978,1105,years,input,residual maturity / amortization,"median remaining term, variable/mixed loans (p2_17)"
+net_wealth_income_p50,4.1794,0.115,6371,ratio,context,total wealth target,median net wealth / income
+share_real_over_gross_wealth,0.7921,0.0099,6385,share,context,illiquid = housing-heavy,real assets / gross wealth
+share_financial_over_gross_wealth,0.2079,0.0099,6385,share,context,financial wealth,financial assets / gross wealth
+htm_poor_share,0.0909,0.0052,6371,share,fact,poor-HtM,HtM with low illiquid wealth
+htm_wealthy_share,0.129,0.006,6371,share,fact,wealthy-HtM (dominant -> two assets),HtM with sizeable illiquid wealth
+htm_share_exposed_H0,0.2015,0.0172,1105,share,fact,HtM among exposed (by households),H0
+htm_share_exposed_H1,0.2242,0.0228,1105,share,fact,HtM among exposed (by euros of Mvar),H1; ratio H1/H0 ~ 1 -> extensive margin
+neg_liquid_share,0.0352,0.0033,6371,share,fact,borrowing marginal (b_low),households with negative net liquid (revolving debt)
+dsr_over40_pre,0.0442,0.0111,1071,share,fact,debt-service tail (pre),share of exposed with DSR > 40% before shock
+dsr_over40_post,0.0839,0.0129,1071,share,fact,debt-service tail (post),share of exposed with DSR > 40% after +400 bp
+spread_over_euribor1Y_2022,0.974,,,pp,diagnostic,mortgage spread kappa,rate_p50 - 2022 avg 1Y Euribor (1.09)
+liq_income_pctile_p10,0.0052,,,ratio,check,beta dispersion,liquid/income percentile
+liq_income_pctile_p25,0.0543,,,ratio,check,beta dispersion,liquid/income percentile
+liq_income_pctile_p50,0.2632,,,ratio,check,beta dispersion,liquid/income percentile
+liq_income_pctile_p75,0.8544,,,ratio,check,beta dispersion,liquid/income percentile
+liq_income_pctile_p90,1.9802,,,ratio,check,beta dispersion,liquid/income percentile
+partial_corr_Mvar_liqincome,-0.0272,,1105,corr,fact,"Cov(MPC,exposure) ~ 0",partial rank corr | income

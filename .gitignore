@@ -1,0 +1,26 @@
+# ---- EFF microdata (Banco de España): NOT redistributable — never commit ----
+data/eff_raw/
+data/eff_clean/
+**/seccion6_*.csv
+**/otras_secciones_*.csv
+**/databol*.csv
+**/sombra_*.csv
+**/replicate_*weights_*.csv
+**/*.rds
+*.RData
+*.Rhistory
+
+# ---- housekeeping / not for the repo ----
+_to_delete/
+
+# ---- caches / OS junk ----
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+
+# ---- regenerated outputs at any level (produced by run_all) ----
+**/output/*.png
+**/output/*.csv
+**/output/*.svg
+!output/.gitkeep
