@@ -1,17 +1,18 @@
 {
-  "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py against calibration/eff_targets.csv.",
+  "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py (exactly-identified 4v4 design) against calibration/eff_targets.csv.",
   "household": {
     "beta": [
-      0.9530118919,
-      0.9813
+      0.953276,
+      0.981
     ],
     "pi": [
-      0.971,
-      0.029
+      0.975683,
+      0.024317
     ],
-    "chi1": 7.51,
-    "sig_eps": 0.346,
-    "ra": 0.0349,
+    "chi1": 6.828756,
+    "sig_eps": 0.353502,
+    "ra": 0.035,
+    "_external": "ra and beta_patient are set externally, not calibrated. ra = real net return on the housing-heavy illiquid portfolio; beta_patient = the patient (accumulating) type, beta*(1+ra)~1.016.",
     "fixed": {
       "eis": 0.5,
       "rb": 0.0,
@@ -34,16 +35,24 @@
       "liquid_income_p50": 0.2632,
       "illiquid_income_p50": 3.5555,
       "htm_share": 0.22,
-      "mpc_annual": 0.25
+      "net_wealth_top10_share": 0.5362
     },
     "achieved": {
-      "liquid_income_p50": 0.2605,
-      "illiquid_income_p50": 3.5381,
-      "htm_share": 0.2189,
-      "mpc_gradient": 0.2522
+      "liquid_income_p50": 0.263,
+      "illiquid_income_p50": 3.5363,
+      "htm_share": 0.22,
+      "net_wealth_top10_share": 0.5362
     },
-    "loss": 0.00021,
-    "_note_precision": "beta_modal is stored to 6 decimals: household wealth is steep in the discount factor, so a 4th-decimal change moves the illiquid moment by ~0.5."
+    "untargeted": {
+      "mpc_annual": 0.2458,
+      "net_wealth_income_p50": 4.0154,
+      "htm_wealthy_share": 0.2154,
+      "htm_poor_share": 0.0046,
+      "net_wealth_top1_share": 0.1031,
+      "_note": "MPC is not targeted; it, the poor/wealthy-HtM split, the net-wealth median and the top-1% net-wealth share are computed and reported for reference (not targeted)."
+    },
+    "loss": 2.4e-05,
+    "_note_precision": "beta_modal is steep in the illiquid moment; stored to 8 decimals and re-pinned by --refine."
   },
   "mortgage": {
     "mortgage_share": 0.2765,
@@ -72,6 +81,6 @@
   "notes": [
     "Steady-state mortgage payment uses the measured rate_level; spread_over_euribor_2022 is the margin over Euribor, used only in the incidence narrative.",
     "Germany's counterfactual uses the ECB MIR / ESRB stock variable-rate share (0.12).",
-    "The illiquid moment is steep in beta_modal (stored to 10 decimals); see household._note_precision."
+    "Household calibration is the exactly-identified 4v4 design; see household._note_precision and calib_E_4v4.py."
   ]
 }

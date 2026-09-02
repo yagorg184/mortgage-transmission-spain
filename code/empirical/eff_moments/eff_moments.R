@@ -51,7 +51,13 @@ prep <- function(d) {
   d
 }
 
-imp <- lapply(1:5, function(m) prep(readRDS(file.path(IMP_DIR, sprintf("hogar_imp%d.rds", m)))))
+# Build the five implicates straight from the raw files (data/raw), in memory --
+# no manual "clean" step. build_eff.R only defines build_implicates() here
+# (EFF_LIB_ONLY suppresses its stand-alone auto-run); run build_eff.R on its own
+# if you want the data/clean/*.rds cache as well.
+EFF_LIB_ONLY <- TRUE
+source("build_eff.R")
+imp <- lapply(build_implicates(), prep)
 N   <- nrow(imp[[1]])
 
 HAVE_SE <- file.exists(WEIGHTS)
@@ -153,6 +159,21 @@ emit_scalar("share_real_over_gross_wealth",
 emit_scalar("share_financial_over_gross_wealth",
   ratio_est("actfinanc", "riquezabr"), n = N, unit = "share", role = "context",
   object = "financial wealth", def = "financial assets / gross wealth")
+
+# =============================================================================
+banner("Wealth concentration (identifies the patient type)")
+# Top net-wealth shares. The top-10% share is a calibration target (it disciplines
+# the mass of the patient/rich type, pi_modal). The top-1% share is reported as a
+# fact: a two-type model cannot reach it (the extreme tail is too thin), the same
+# way it cannot reach poor-HtM at the bottom.
+emit_scalar("net_wealth_top10_share",
+  function(d, w) w_topshare(d$riquezanet, w, 0.10),
+  n = N, unit = "share", role = "target", object = "top-10% net wealth share (pi_modal)",
+  def = "share of total net wealth held by the top 10%")
+emit_scalar("net_wealth_top1_share",
+  function(d, w) w_topshare(d$riquezanet, w, 0.01),
+  n = N, unit = "share", role = "fact", object = "top-1% net wealth share (extreme tail, unreached)",
+  def = "share of total net wealth held by the top 1%")
 
 # =============================================================================
 banner("Hand-to-mouth split (Kaplan-Violante)")

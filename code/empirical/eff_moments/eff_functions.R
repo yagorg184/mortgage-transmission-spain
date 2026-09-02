@@ -41,6 +41,17 @@ w_quantile <- function(x, w, probs) {
 
 w_median <- function(x, w) w_quantile(x, w, 0.5)
 
+# Weighted share of total x held by the top `top` fraction (e.g. 0.10 -> top 10%).
+# Threshold at the (1 - top) weighted quantile; the denominator is total x, so the
+# share is well defined even when some x are negative (negative net wealth).
+w_topshare <- function(x, w, top) {
+  ok <- is.finite(x) & is.finite(w) & w > 0
+  x <- x[ok]; w <- w[ok]
+  q <- w_quantile(x, w, 1 - top)
+  sel <- x >= q
+  sum(w[sel] * x[sel]) / sum(w * x)
+}
+
 # --- Multiply-imputed inference ----------------------------------------------
 # Point estimates use the population weight; the within-implicate sampling
 # variance comes from the 1,000 BdE bootstrap replicate weights; the five

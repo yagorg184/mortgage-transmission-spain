@@ -11,6 +11,8 @@ mortgage_term_p50,14,0.3978,1105,years,input,residual maturity / amortization,"m
 net_wealth_income_p50,4.1794,0.115,6371,ratio,context,total wealth target,median net wealth / income
 share_real_over_gross_wealth,0.7921,0.0099,6385,share,context,illiquid = housing-heavy,real assets / gross wealth
 share_financial_over_gross_wealth,0.2079,0.0099,6385,share,context,financial wealth,financial assets / gross wealth
+net_wealth_top10_share,0.5362,0.0228,6385,share,target,top-10% net wealth share (pi_modal),share of total net wealth held by the top 10%
+net_wealth_top1_share,0.2114,0.0349,6385,share,fact,"top-1% net wealth share (extreme tail, unreached)",share of total net wealth held by the top 1%
 htm_poor_share,0.0909,0.0052,6371,share,fact,poor-HtM,HtM with low illiquid wealth
 htm_wealthy_share,0.129,0.006,6371,share,fact,wealthy-HtM (dominant -> two assets),HtM with sizeable illiquid wealth
 htm_share_exposed_H0,0.2015,0.0172,1105,share,fact,HtM among exposed (by households),H0

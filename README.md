@@ -13,17 +13,16 @@ ARM block, solved in sequence space (SSJ), plus an own empirical macro validatio
 
 **Headline (all reproduced by execution).** Spain transmits **~1.27×** what it would
 under the German fixed-rate structure; **~26%** of the Spanish consumption response to
-a +100 bp ECB shock is attributable to the variable-rate structure. The mechanism is
-Auclert redistribution: the rate rise moves income from high-MPC borrowers to low-MPC
-creditors (banks → shareholders/foreign investors), who park it — visible in record
-2022–23 bank profits. The aggregate effect is moderate; the distributional effect is
-large (the exposed group falls ~2.7%).
+a +100 bp ECB shock is attributable to the variable-rate structure. The mechanism is a
+redistribution channel (Auclert 2019): the rate rise moves income from higher-MPC
+borrowers to lower-MPC creditors (banks → shareholders/foreign investors). The aggregate
+and distributional magnitudes, and their interpretation, are developed in the paper.
 
 ## Results
 
 | Object | Value | Source |
 |---|---|---|
-| Household fit (loss) | 0.0002 | `calibrate.py` |
+| Household fit (loss) | 0.000004 | `calibrate.py` |
 | Variable group, +400 bp (impact) | −2.8% | `results.py` |
 | Variable group, observed Euribor path, 2024 | −2.4% | `results.py` |
 | Aggregate consumption IRF, +100 bp | −0.38% | `results.py` |
@@ -63,13 +62,14 @@ The committed `calibration/eff_targets.csv` lets everything above run without th
 microdata. To regenerate those moments from the raw EFF instead:
 
 1. Request the EFF 2022 microdata from the Banco de España (see `DATA_AVAILABILITY.md`),
-   place it under `data/eff_raw/`, and install R with `data.table`.
-2. Run the R pipeline:
+   unzip it under `code/empirical/eff_moments/data/raw/`, and install R with `data.table`.
+2. Run the pipeline (one step — the cleaning is integrated; set `EFF_RAW_DIR` to read the
+   raw files from another location):
    ```
    cd code/empirical/eff_moments
-   Rscript build_eff.R      # raw EFF -> data/eff_clean
-   Rscript eff_moments.R    # -> calibration/eff_targets.csv
+   Rscript eff_moments.R    # raw EFF -> targets, with replicate-weight + Rubin SEs
    ```
+   Then copy `output/eff_targets.csv` over `calibration/eff_targets.csv`.
 3. For the full SMM search (~1.5 h) instead of the fast refine:
    ```
    cd code/model
@@ -81,19 +81,25 @@ microdata. To regenerate those moments from the raw EFF instead:
 - `calibration/` — single source of truth: `calibration.json` (all frozen parameters)
   and `eff_targets.csv` (the EFF moments, each mapped to the object it disciplines).
 - `code/model/` — `config.py` (loads the JSON), `household.py`, `mortgage.py`,
-  `euribor.py`, `ge.py`, `results.py`, and `calibrate.py`. No parameter is hard-coded
-  outside the JSON.
-- `code/empirical/eff_moments/` — the R pipeline: `build_eff.R` (raw EFF → clean) and
-  `eff_moments.R` (clean → all targets and facts, with replicate-weight + Rubin SEs).
+  `euribor.py`, `ge.py`, `results.py`, `calibrate.py`, and `_calib_common.py` (shared
+  calibration helpers). No parameter is hard-coded outside the JSON.
+- `code/model/exploration/` — calibration-design experiments (alternative target and
+  parameter sets, and robustness checks) that informed the final calibration. Not part of
+  the reproduction; kept for transparency.
+- `code/empirical/eff_moments/` — the R pipeline: `eff_moments.R` runs raw EFF → all
+  targets and facts (replicate-weight + Rubin SEs) in one step; `build_eff.R` provides the
+  cleaning it calls, and can be run alone to cache `data/clean/`.
 - `code/empirical/macro_svar/` — `svar.py`, the recursive SVAR.
 - `docs/number_to_script.md` — every paper number → the script that produces it.
 - `data/`, `output/` — see `DATA_AVAILABILITY.md`.
 
 ## Method notes and limitations
 
-- The household calibration matches three EFF moments (liquid, illiquid, hand-to-mouth);
-  the annual MPC target is external (empirical MPC literature). Household wealth is steep
-  in the modal discount factor, so `beta_modal` is stored to 10 decimals.
+- The household calibration matches four EFF moments (median liquid/income, median
+  illiquid/income, hand-to-mouth share, and the top-10% net-wealth share); the illiquid
+  return and the patient discount factor are set externally, and the annual MPC is not
+  targeted (reported alongside the fit). Household wealth is steep in the modal discount
+  factor, so `beta_modal` is stored to several decimals and re-pinned by `calibrate.py --refine`.
 - The steady-state mortgage payment uses the measured rate level (~2%); the ~1 pp margin
   over Euribor enters only the interest-incidence narrative.
 - The German counterfactual uses the ECB MIR / ESRB stock variable-rate share (0.12).

@@ -24,3 +24,17 @@ __pycache__/
 **/output/*.csv
 **/output/*.svg
 !output/.gitkeep
+
+# ---- restricted EFF microdata: ignore the whole raw/clean trees (incl .do labels, codebook) ----
+**/data/raw/
+**/data/clean/
+
+# ---- calibration run artifacts (checkpoints, histories, results) ----
+**/output/*.json
+**/output/*.jsonl
+
+# ---- bloated generated export (the .md is the source) ----
+DATA_AVAILABILITY.html
+
+# ---- paper draft: kept out of the public repo until finished ----
+paper/
