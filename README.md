@@ -11,8 +11,8 @@ relative to a fixed-rate (German-style) counterfactual?
 ARM block, solved in sequence space (SSJ), plus an own empirical macro validation
 (recursive block-exogenous SVAR).
 
-**Headline (all reproduced by execution).** Spain transmits **~1.23×** what it would
-under the German fixed-rate structure; **~22%** of the Spanish consumption response to
+**Headline (all reproduced by execution).** Spain transmits **~1.19×** what it would
+under the German fixed-rate structure; **~20%** of the Spanish consumption response to
 a +100 bp ECB shock is attributable to the variable-rate structure. The mechanism is a
 redistribution channel (Auclert 2019): the rate rise moves income from higher-MPC
 borrowers to lower-MPC creditors (banks → shareholders/foreign investors). The aggregate
@@ -25,8 +25,8 @@ and distributional magnitudes, and their interpretation, are developed in the pa
 | Household fit (loss) | 0.000004 | `calibrate.py` |
 | Variable group, +400 bp (impact) | −2.8% | `results.py` |
 | Variable group, observed Euribor path, 2024 | −2.4% | `results.py` |
-| Aggregate consumption IRF, +100 bp | −0.38% | `results.py` |
-| Counterfactual Spain / Germany | 1.23× (22% attributable) | `results.py` |
+| Aggregate consumption IRF, +100 bp | −0.37% | `results.py` |
+| Counterfactual Spain / Germany | 1.19× (20% attributable) | `results.py` |
 | SVAR consumption, +100 bp (impact) | −0.27% | `svar.py` |
 
 The micro anchor (−2.4% vs the BdE's −2.7%) is an **out-of-sample** validation — that
@@ -53,7 +53,7 @@ py run_all.py
 
 `run_all.py` takes a few minutes and prints, in order: the household calibration
 (`calibrate.py --refine`, ~1 min), the structural headlines (`results.py`:
-−2.8% / −2.4% / −0.38% / 1.23×), and the SVAR (`svar.py`: −0.27%, with figures written
+−2.8% / −2.4% / −0.37% / 1.19×), and the SVAR (`svar.py`: −0.27%, with figures written
 to `output/`). A Unix shell version, `run_all.sh`, is also provided.
 
 ### Full replication from scratch (optional)

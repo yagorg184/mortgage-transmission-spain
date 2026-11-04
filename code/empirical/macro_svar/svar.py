@@ -176,7 +176,7 @@ def make_figure_main(r, path):
     a.fill_between(h,m["lcons_es_lo90"],m["lcons_es_hi90"],color=BLUE,alpha=.12,lw=0,label="90% band")
     a.fill_between(h,m["lcons_es_lo68"],m["lcons_es_hi68"],color=BLUE,alpha=.25,lw=0,label="68% band")
     a.plot(h,m["lcons_es"],color=BLUE,lw=2.6,label="Spanish consumption (SVAR)")
-    a.plot([0,4,8],[-0.38,-0.13,-0.01],"D--",color=RED,lw=1.7,ms=7,label="HANK model (annual)")
+    a.plot([0,4,8],[-0.37,-0.13,-0.01],"D--",color=RED,lw=1.7,ms=7,label="HANK model (annual)")
     a.axhline(0,color="#333",lw=.9,ls=(0,(4,3)))
     a.set_title(f"Spanish real consumption to +100 bp — recursive SVAR\nimpact {impact:.2f}% · trough {trough:.2f}% within a year",fontsize=11)
     a.set_xlabel("quarters after the shock"); a.set_ylabel("consumption, % · per +100 bp")

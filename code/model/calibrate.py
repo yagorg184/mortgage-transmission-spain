@@ -38,8 +38,8 @@ BOUNDS = [(0.950, 0.958), (0.92, 0.985), (5.0, 8.0), (0.28, 0.42)]
 TARGETS = [("liquid_income_p50", 1.0), ("illiquid_income_p50", 0.8),
            ("htm_share", 1.0), ("net_wealth_top10_share", 1.0)]
 
-# blocks that are not part of the household SMM
-MORT_MODEL = dict(amort=0.03)
+# blocks that are not part of the household SMM. amort is derived from the EFF
+# residual term (Eq. below), not a free constant.
 INCIDENCE = dict(beta_dep=0.32, mpc_shareholder=0.05, lambda_ext=0.50)
 COUNTRY = {"all_fixed": 0.0, "Germany": 0.12, "France": 0.12, "euro_area": 0.25,
            "Italy": 0.45, "Spain": 0.70, "all_variable": 1.0}
@@ -80,6 +80,8 @@ def assemble(x, lossval):
     m = CC.solve_moments(betas, pis, chi1, se, RA)
     t = pd.read_csv(os.path.join(CAL, "eff_targets.csv")).drop_duplicates("key").set_index("key")["value"]
     r4 = lambda v: round(float(v), 4)
+    rm = round(float(t["mortgage_rate_level_p50"]) / 100, 4)   # measured mortgage rate
+    nyr = float(t["mortgage_term_p50"])                        # measured residual term (years)
     return {
         "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py (exactly-identified 4v4 design) against calibration/eff_targets.csv.",
         "household": {
@@ -110,10 +112,12 @@ def assemble(x, lossval):
             "mortgage_share": r4(t["mortgage_share"]),
             "variable_share": r4(t["variable_share_among_mortgaged"]),
             "M_var_income_exposed": r4(t["Mvar_income_p50_exposed"]),
-            "rate_level": round(float(t["mortgage_rate_level_p50"]) / 100, 4),
+            "rate_level": rm,
             "spread_over_euribor_2022": round(float(t["spread_over_euribor1Y_2022"]) / 100, 4),
-            "term_years": float(t["mortgage_term_p50"]),
-            **MORT_MODEL,
+            "term_years": nyr,
+            # annuity amortisation implied by the EFF residual term:
+            # p=(r_m+amort)M with p the level annuity => amort = r_m/(1-(1+r_m)^-n) - r_m
+            "amort": round(rm / (1 - (1 + rm) ** (-nyr)) - rm, 4),
         },
         "incidence": INCIDENCE,
         "country_variable_share_stock_2022": {

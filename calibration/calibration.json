@@ -2,15 +2,15 @@
   "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py (exactly-identified 4v4 design) against calibration/eff_targets.csv.",
   "household": {
     "beta": [
-      0.95327631,
+      0.95240104,
       0.981
     ],
     "pi": [
-      0.975683,
-      0.024317
+      0.975165,
+      0.024835
     ],
-    "chi1": 6.828756,
-    "sig_eps": 0.353502,
+    "chi1": 6.795054,
+    "sig_eps": 0.354524,
     "ra": 0.035,
     "_external": "ra and beta_patient are set externally, not calibrated. ra = real net return on the housing-heavy illiquid portfolio; beta_patient = the patient (accumulating) type, beta*(1+ra)~1.016.",
     "fixed": {
@@ -18,8 +18,8 @@
       "rb": 0.0,
       "chi0": 0.25,
       "chi2": 2.0,
-      "rho_z": 0.9831,
-      "sig_eta": 0.072
+      "rho_z": 0.98,
+      "sig_eta": 0.08
     },
     "grid": {
       "nB": 30,
@@ -38,20 +38,20 @@
       "net_wealth_top10_share": 0.5362
     },
     "achieved": {
-      "liquid_income_p50": 0.2632,
-      "illiquid_income_p50": 3.5474,
-      "htm_share": 0.22,
-      "net_wealth_top10_share": 0.5362
+      "liquid_income_p50": 0.2606,
+      "illiquid_income_p50": 3.5371,
+      "htm_share": 0.2203,
+      "net_wealth_top10_share": 0.5358
     },
     "untargeted": {
-      "mpc_annual": 0.2458,
-      "net_wealth_income_p50": 4.0144,
-      "htm_wealthy_share": 0.2154,
-      "htm_poor_share": 0.0046,
-      "net_wealth_top1_share": 0.1031,
+      "mpc_annual": 0.2454,
+      "net_wealth_income_p50": 4.0617,
+      "htm_wealthy_share": 0.2156,
+      "htm_poor_share": 0.0047,
+      "net_wealth_top1_share": 0.1037,
       "_note": "MPC is not targeted; it, the poor/wealthy-HtM split, the net-wealth median and the top-1% net-wealth share are computed and reported for reference (not targeted)."
     },
-    "loss": 4e-06,
+    "loss": 0.00012,
     "_note_precision": "beta_modal is steep in the illiquid moment; stored to 8 decimals and re-pinned by --refine."
   },
   "mortgage": {
@@ -61,7 +61,7 @@
     "rate_level": 0.0206,
     "spread_over_euribor_2022": 0.0097,
     "term_years": 14.0,
-    "amort": 0.03
+    "amort": 0.0624
   },
   "incidence": {
     "beta_dep": 0.32,

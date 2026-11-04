@@ -55,9 +55,17 @@ HH = ta.hh.add_hetinputs([make_grids_es, income_es])
 
 # Fixed structural parameters and solution grid. The calibrated parameters
 # (beta, chi1, sig_eps) are passed in by solve_type / pooled.
+# Persistent income component: annual AR(1). Spanish labour earnings are highly
+# persistent (Pijoan-Mas & Sanchez-Marcos 2010 model the permanent component as a
+# random walk; the annual-earnings literature estimates rho ~ 0.98-0.99, e.g.
+# Storesletten-Telmer-Yaron 2004, Guvenen 2009). We take rho_z = 0.98 as a stationary
+# high-persistence value and set sig_eta = 0.08 so the persistent component's
+# cross-sectional variance is ~0.16 (standard range). This is a data-light input, not
+# a Spanish panel estimate (no panel access; see limitations); the transitory sig_eps
+# is calibrated to the Spanish EFF.
 BASE = dict(eis=0.5, rb=0.0, ra=0.04, chi0=0.25, chi2=2.0, tax=0.0, w=1.0, N=1.0,
             bmax=50, amax=80, kmax=1, nB=30, nA=40, nK=4, nZ=5, nEps=3,
-            rho_z=0.9831, sig_eta=0.072, fe_mult=1.0, payment=0.0)
+            rho_z=0.98, sig_eta=0.08, fe_mult=1.0, payment=0.0)
 
 
 def fe_types(nFE=1, sig_fe=0.30):
