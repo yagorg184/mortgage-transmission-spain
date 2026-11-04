@@ -1,36 +1,50 @@
 {
-  "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py (exactly-identified 4v4 design) against calibration/eff_targets.csv.",
+  "_about": "Single source of truth for the model. Household block produced by calibrate.py against calibration/eff_targets.csv and eff_exposure.csv; sources for external values in docs/sources.md.",
   "household": {
-    "beta": [
-      0.95240104,
-      0.981
-    ],
-    "pi": [
-      0.975165,
-      0.024835
-    ],
-    "chi1": 6.795054,
-    "sig_eps": 0.354524,
-    "ra": 0.035,
-    "_external": "ra and beta_patient are set externally, not calibrated. ra = real net return on the housing-heavy illiquid portfolio; beta_patient = the patient (accumulating) type, beta*(1+ra)~1.016.",
     "fixed": {
       "eis": 0.5,
       "rb": 0.0,
+      "ra": 0.035,
       "chi0": 0.25,
       "chi2": 2.0,
-      "rho_z": 0.98,
-      "sig_eta": 0.08
-    },
-    "grid": {
+      "tax": 0.0,
+      "w": 1.0,
+      "N": 1.0,
+      "kmax": 1,
       "nB": 30,
-      "nA": 40,
       "nK": 4,
       "nZ": 5,
       "nEps": 3,
-      "bmax": 50,
-      "amax": 80,
-      "kmax": 1
+      "rho_z": 0.98,
+      "sig_eta": 0.08
     },
+    "grids": {
+      "modal": {
+        "bmax": 50,
+        "amax": 200,
+        "nA": 50
+      },
+      "patient": {
+        "bmax": 50,
+        "amax": 1500,
+        "nA": 80
+      }
+    },
+    "types": [
+      {
+        "name": "modal",
+        "beta": 0.9511158,
+        "mass": 0.94880854
+      },
+      {
+        "name": "patient",
+        "beta": 0.9645358,
+        "mass": 0.05119146
+      }
+    ],
+    "chi1": 7.485845,
+    "sig_eps": 0.343676,
+    "stationarity_margin": 0.999,
     "targets": {
       "liquid_income_p50": 0.2632,
       "illiquid_income_p50": 3.5555,
@@ -38,49 +52,97 @@
       "net_wealth_top10_share": 0.5362
     },
     "achieved": {
-      "liquid_income_p50": 0.2606,
-      "illiquid_income_p50": 3.5371,
-      "htm_share": 0.2203,
-      "net_wealth_top10_share": 0.5358
+      "liquid_income_p50": 0.2632,
+      "illiquid_income_p50": 3.5552,
+      "htm_share": 0.22,
+      "net_wealth_top10_share": 0.5364
     },
     "untargeted": {
-      "mpc_annual": 0.2454,
-      "net_wealth_income_p50": 4.0617,
-      "htm_wealthy_share": 0.2156,
-      "htm_poor_share": 0.0047,
-      "net_wealth_top1_share": 0.1037,
-      "_note": "MPC is not targeted; it, the poor/wealthy-HtM split, the net-wealth median and the top-1% net-wealth share are computed and reported for reference (not targeted)."
+      "net_wealth_income_p50": 4.0751,
+      "htm_poor_share": 0.0062,
+      "htm_wealthy_share": 0.2138,
+      "net_wealth_top1_share": 0.1609,
+      "mpc_annual": 0.247,
+      "htm_share_none": 0.2095,
+      "htm_share_tercile1": 0.2291,
+      "htm_share_tercile2": 0.2403,
+      "htm_share_tercile3": 0.2731
     },
-    "loss": 0.00012,
-    "_note_precision": "beta_modal is steep in the illiquid moment; stored to 8 decimals and re-pinned by --refine."
+    "distribution_checks": {
+      "modal/none": {
+        "total": 1.0000000000000049,
+        "min": 0.0,
+        "top_a": 1.433073695631657e-13,
+        "top_b": 0.0
+      },
+      "modal/tercile1": {
+        "total": 1.0000000000000044,
+        "min": 0.0,
+        "top_a": 3.2647112393403264e-13,
+        "top_b": 0.0
+      },
+      "modal/tercile2": {
+        "total": 1.0000000000000058,
+        "min": 0.0,
+        "top_a": 4.687875779652272e-13,
+        "top_b": 0.0
+      },
+      "modal/tercile3": {
+        "total": 1.0000000000000053,
+        "min": 0.0,
+        "top_a": 1.0588397838128701e-12,
+        "top_b": 0.0
+      },
+      "patient/none": {
+        "total": 1.0000000000000078,
+        "min": 0.0,
+        "top_a": 3.781512435651009e-62,
+        "top_b": 0.0
+      },
+      "patient/tercile1": {
+        "total": 1.0000000000000124,
+        "min": 0.0,
+        "top_a": 9.358510191967948e-62,
+        "top_b": 0.0
+      },
+      "patient/tercile2": {
+        "total": 1.000000000000005,
+        "min": 0.0,
+        "top_a": 1.656042688713427e-61,
+        "top_b": 0.0
+      },
+      "patient/tercile3": {
+        "total": 1.0000000000000213,
+        "min": 0.0,
+        "top_a": 6.295023428755237e-61,
+        "top_b": 0.0
+      }
+    }
   },
-  "mortgage": {
-    "mortgage_share": 0.2765,
-    "variable_share": 0.7036,
-    "M_var_income_exposed": 1.4385,
-    "rate_level": 0.0206,
-    "spread_over_euribor_2022": 0.0097,
-    "term_years": 14.0,
-    "amort": 0.0624
+  "nominal": {
+    "inflation_ss": 0.02
   },
-  "incidence": {
-    "beta_dep": 0.32,
-    "mpc_shareholder": 0.05,
-    "lambda_ext": 0.5
+  "banks": {
+    "foreign_share": 0.5,
+    "corporate_tax": 0.3,
+    "policy_spread": 0.0097
   },
-  "country_variable_share_stock_2022": {
-    "_source": "Spain: EFF 2022. Euro area: ECB (2025, pure-ARM stock ~25%). Germany/Italy/France: ~2022, consistent with the ECB ordering and the HFCS cross-country ranking (Ehrmann-Ziegelmeyer, ECB WP 1631). See docs/sources.md.",
+  "union": {
+    "import_share": 0.2519
+  },
+  "ge": {
+    "frisch": 1.0,
+    "kappa_w": 0.1,
+    "beta_w": 0.96
+  },
+  "country_variable_share_stock": {
+    "_source": "Spain: EFF 2022 (share of the outstanding dwelling-debt stock at variable rates). Euro area: ECB (2025). Germany, France, Italy: HFCS ranking (Ehrmann and Ziegelmeyer, 2017) and ECB MIR; read as ordinal.",
     "all_fixed": 0.0,
     "Germany": 0.12,
     "France": 0.12,
     "euro_area": 0.25,
     "Italy": 0.45,
-    "Spain": 0.7,
+    "Spain": 0.68,
     "all_variable": 1.0
-  },
-  "notes": [
-    "Steady-state mortgage payment uses the measured rate_level; spread_over_euribor_2022 is the margin over Euribor, used only in the incidence narrative.",
-    "Germany's counterfactual uses the ECB MIR / ESRB stock variable-rate share (0.12).",
-    "Household calibration is the exactly-identified 4v4 design; see household._note_precision and exploration/calib_E_4v4.py."
-  ]
+  }
 }

@@ -101,57 +101,54 @@ banner <- function(x) cat("\n===== ", x, " =====\n", sep = "")
 
 # =============================================================================
 banner("Calibration targets (household model)")
-# Three of the four SMM targets are EFF moments; the fourth (annual MPC = 0.25)
-# is external (empirical MPC literature) and is recorded here for completeness.
+# Four calibration targets: these three and the top-10% share of net worth below.
+# The annual MPC is not a target; it is reported by the model as a check.
 emit_scalar("liquid_income_p50",
   function(d, w) { ok <- d$income_ok; w_quantile(d$liq_income[ok], w[ok], .5) },
   n = sum(imp[[1]]$income_ok), unit = "ratio", role = "target",
-  object = "liquid-asset target (chi1 / beta split)",
+  object = "calibration target",
   def = "median liquid assets / annual income")
 emit_scalar("illiquid_income_p50",
   function(d, w) w_quantile(d$iliq_income, w, .5),
   n = sum(imp[[1]]$income_ok), unit = "ratio", role = "target",
-  object = "illiquid-asset target (ra)",
+  object = "calibration target",
   def = "median illiquid net wealth / annual income")
 emit_scalar("htm_share",
   function(d, w) { ok <- d$income_ok; w_share((d$liquid <= d$income / HTM_DIV)[ok], w[ok]) },
   n = sum(imp[[1]]$income_ok), unit = "share", role = "target",
-  object = "hand-to-mouth share (beta heterogeneity)",
+  object = "calibration target",
   def = "liquid <= income/24")
-emit("mpc_annual", 0.25, NA, NA, "ratio", "target (external)",
-     "sigma_eps in SMM",
-     "NOT from the EFF: HANK calibration norm (Kaplan-Violante, 0.15-0.25), consistent with the 22% HtM; HFCS direct survey is higher (~0.5). See docs/sources.md")
 
 # =============================================================================
 banner("Mortgage structure (model inputs)")
 emit_scalar("mortgage_share",
   function(d, w) w_share(d$M_tot > 0, w),
-  n = N, unit = "share", role = "input", object = "mortgage prevalence",
+  n = N, unit = "share", role = "input", object = "share of households with a mortgage",
   def = "households with dwelling debt")
 emit_scalar("variable_share_among_mortgaged",
   function(d, w) { s <- d$M_tot > 0; w_share((d$M_var > 0)[s], w[s]) },
-  n = sum(imp[[1]]$M_tot > 0), unit = "share", role = "input", object = "PVAR (variable-rate share)",
-  def = "variable-rate share of the mortgaged stock")
+  n = sum(imp[[1]]$M_tot > 0), unit = "share", role = "input", object = "variable-rate share of mortgagors",
+  def = "share of households with dwelling debt that hold some variable-rate dwelling debt")
 emit_scalar("Mvar_income_p50_exposed",
   function(d, w) { s <- d$M_var > 0; w_quantile(d$exp_income[s], w[s], .5) },
-  n = sum(imp[[1]]$M_var > 0), unit = "ratio", role = "input", object = "MV (exposure)",
+  n = sum(imp[[1]]$M_var > 0), unit = "ratio", role = "context", object = "exposure of variable-rate borrowers",
   def = "median variable balance / income among exposed")
 emit_scalar("mortgage_rate_level_p50",
   function(d, w) { s <- d$mortgage_type %in% c("variable", "mixed"); w_quantile(d$p2_13_1[s], w[s], .5) },
   n = sum(imp[[1]]$mortgage_type %in% c("variable", "mixed")), unit = "% p.a.",
-  role = "input", object = "mortgage rate level (NOT a spread)",
+  role = "context", object = "mortgage rate (enters the spread below)",
   def = "median current interest rate, variable/mixed loans (p2_13)")
 emit_scalar("mortgage_term_p50",
   function(d, w) { s <- d$mortgage_type %in% c("variable", "mixed"); w_quantile(d$p2_17_1[s], w[s], .5) },
   n = sum(imp[[1]]$mortgage_type %in% c("variable", "mixed")), unit = "years",
-  role = "input", object = "residual maturity / amortization",
+  role = "context", object = "remaining term",
   def = "median remaining term, variable/mixed loans (p2_17)")
 
 # =============================================================================
 banner("Portfolio composition (two-asset justification)")
 emit_scalar("net_wealth_income_p50",
   function(d, w) w_quantile(d$nw_income, w, .5),
-  n = sum(imp[[1]]$income_ok), unit = "ratio", role = "context", object = "total wealth target",
+  n = sum(imp[[1]]$income_ok), unit = "ratio", role = "context", object = "untargeted moment",
   def = "median net wealth / income")
 emit_scalar("share_real_over_gross_wealth",
   ratio_est("actreales", "riquezabr"), n = N, unit = "share", role = "context",
@@ -163,45 +160,44 @@ emit_scalar("share_financial_over_gross_wealth",
 # =============================================================================
 banner("Wealth concentration (identifies the patient type)")
 # Top net-wealth shares. The top-10% share is a calibration target (it disciplines
-# the mass of the patient/rich type, pi_modal). The top-1% share is reported as a
-# fact: a two-type model cannot reach it (the extreme tail is too thin), the same
-# way it cannot reach poor-HtM at the bottom.
+# the patient type). The top-1% share is an untargeted moment, which the two-type
+# model does not reach, as it does not reach the poor hand-to-mouth share.
 emit_scalar("net_wealth_top10_share",
   function(d, w) w_topshare(d$riquezanet, w, 0.10),
-  n = N, unit = "share", role = "target", object = "top-10% net wealth share (pi_modal)",
+  n = N, unit = "share", role = "target", object = "calibration target",
   def = "share of total net wealth held by the top 10%")
 emit_scalar("net_wealth_top1_share",
   function(d, w) w_topshare(d$riquezanet, w, 0.01),
-  n = N, unit = "share", role = "fact", object = "top-1% net wealth share (extreme tail, unreached)",
+  n = N, unit = "share", role = "fact", object = "untargeted moment",
   def = "share of total net wealth held by the top 1%")
 
 # =============================================================================
 banner("Hand-to-mouth split (Kaplan-Violante)")
 emit_scalar("htm_poor_share",
   function(d, w) { ok <- !is.na(d$htm_cat); w_share((d$htm_cat == "poor")[ok], w[ok]) },
-  n = sum(imp[[1]]$income_ok), unit = "share", role = "fact", object = "poor-HtM",
+  n = sum(imp[[1]]$income_ok), unit = "share", role = "fact", object = "untargeted moment",
   def = "HtM with low illiquid wealth")
 emit_scalar("htm_wealthy_share",
   function(d, w) { ok <- !is.na(d$htm_cat); w_share((d$htm_cat == "wealthy")[ok], w[ok]) },
-  n = sum(imp[[1]]$income_ok), unit = "share", role = "fact", object = "wealthy-HtM (dominant -> two assets)",
+  n = sum(imp[[1]]$income_ok), unit = "share", role = "fact", object = "untargeted moment",
   def = "HtM with sizeable illiquid wealth")
 
 # =============================================================================
-banner("Amplification object: extensive margin, not fragility")
-# HtM by households (H0) vs weighted by euros of variable balance (H1). Ratio
-# near 1 means exposed euros are not concentrated in fragile hands.
+banner("Liquidity of variable-rate borrowers")
+# Hand-to-mouth share among variable-rate borrowers, counting households (H0)
+# and weighting each by her variable-rate balance (H1).
 emit_scalar("htm_share_exposed_H0",
   function(d, w) { s <- d$M_var > 0 & d$income_ok; w_share(d$htm[s], w[s]) },
   n = sum(imp[[1]]$M_var > 0 & imp[[1]]$income_ok), unit = "share", role = "fact",
-  object = "HtM among exposed (by households)", def = "H0")
+  object = "hand-to-mouth, variable-rate borrowers", def = "H0: by households")
 emit_scalar("htm_share_exposed_H1",
   function(d, w) { s <- d$M_var > 0 & d$income_ok
                    sum(w[s] * d$htm[s] * d$M_var[s]) / sum(w[s] * d$M_var[s]) },
   n = sum(imp[[1]]$M_var > 0 & imp[[1]]$income_ok), unit = "share", role = "fact",
-  object = "HtM among exposed (by euros of Mvar)", def = "H1; ratio H1/H0 ~ 1 -> extensive margin")
+  object = "hand-to-mouth, variable-rate borrowers", def = "H1: weighted by variable-rate balance")
 emit_scalar("neg_liquid_share",
   function(d, w) { ok <- d$income_ok; w_share((d$liquid < 0)[ok], w[ok]) },
-  n = sum(imp[[1]]$income_ok), unit = "share", role = "fact", object = "borrowing marginal (b_low)",
+  n = sum(imp[[1]]$income_ok), unit = "share", role = "fact", object = "negative net liquid wealth",
   def = "households with negative net liquid (revolving debt)")
 
 # =============================================================================
@@ -209,11 +205,11 @@ banner("Mechanical stress test (+400 bp, first round)")
 stress_ok <- function(d) d$M_var > 0 & d$income_ok & is.finite(d$dsr_post)
 emit_scalar("dsr_over40_pre",
   function(d, w) { s <- stress_ok(d); w_share((d$dsr_pre > 0.40)[s], w[s]) },
-  n = sum(stress_ok(imp[[1]])), unit = "share", role = "fact", object = "debt-service tail (pre)",
+  n = sum(stress_ok(imp[[1]])), unit = "share", role = "fact", object = "debt-service ratio above 40%",
   def = "share of exposed with DSR > 40% before shock")
 emit_scalar("dsr_over40_post",
   function(d, w) { s <- stress_ok(d); w_share((d$dsr_post > 0.40)[s], w[s]) },
-  n = sum(stress_ok(imp[[1]])), unit = "share", role = "fact", object = "debt-service tail (post)",
+  n = sum(stress_ok(imp[[1]])), unit = "share", role = "fact", object = "debt-service ratio above 40%",
   def = "share of exposed with DSR > 40% after +400 bp")
 
 # =============================================================================
@@ -222,20 +218,20 @@ pt <- function(est) mean(vapply(imp, function(d) est(d, d$facine3), numeric(1)))
 # Spread over the reference rate: resolves the p2_13 mislabel.
 rate50 <- ROWS[[which(vapply(ROWS, function(r) r$key, "") == "mortgage_rate_level_p50")]]$value
 emit("spread_over_euribor1Y_2022", rate50 - REF_EURIBOR_1Y_2022, NA, NA, "pp",
-     "diagnostic", "mortgage spread kappa",
+     "input", "mortgage spread over the Euribor",
      sprintf("rate_p50 - 2022 avg 1Y Euribor (%.2f)", REF_EURIBOR_1Y_2022))
 # Liquid/income dispersion (targets the spread of beta).
 for (p in c(.10, .25, .50, .75, .90)) {
   v <- pt(function(d, w) { ok <- d$income_ok; w_quantile(d$liq_income[ok], w[ok], p) })
   emit(sprintf("liq_income_pctile_p%02d", 100 * p), v, NA, NA, "ratio", "check",
-       "beta dispersion", "liquid/income percentile")
+       "distribution of liquid wealth", "liquid/income percentile")
 }
 # Partial correlation of exposure and buffer, controlling income (imp1, unweighted).
 d1 <- imp[[1]][M_var > 0 & income_ok == TRUE]
 rx <- resid(lm(log(M_var) ~ log(income), d1))
 ry <- resid(lm(liq_income ~ log(income), d1))
 emit("partial_corr_Mvar_liqincome", cor(rx, ry, method = "spearman"), NA, nrow(d1),
-     "corr", "fact", "Cov(MPC,exposure) ~ 0", "partial rank corr | income")
+     "corr", "fact", "exposure and liquidity", "partial rank corr | income")
 
 # --- Write -------------------------------------------------------------------
 out <- rbindlist(ROWS)

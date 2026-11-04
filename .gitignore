@@ -38,3 +38,8 @@ DATA_AVAILABILITY.html
 
 # ---- paper draft: kept out of the public repo until finished ----
 paper/
+
+# ---- model cache (steady states and Jacobians) ----
+code/model/output/cache/
+**/output/*.log
+**/output/*.txt

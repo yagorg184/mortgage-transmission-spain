@@ -1,110 +1,70 @@
-# Mortgage rate structure and the transmission of ECB monetary policy to Spanish consumption
+# Adjustable-Rate Mortgages and the Transmission of ECB Monetary Policy to Household Consumption in Spain
 
-Replication package for the working paper *(title TBD)*.
+Code and data for the paper of the same title. About two-thirds of the mortgage debt of Spanish households
+carries a rate indexed to the Euribor. The paper measures how much this contract structure adds to the
+response of household consumption to ECB monetary policy. It uses a two-asset heterogeneous-agent model
+calibrated to the Spanish Survey of Household Finances (EFF 2022), with:
 
-**Question.** How much does Spain's near-universal **adjustable-rate mortgage (ARM)**
-structure amplify the transmission of ECB monetary policy to household consumption,
-relative to a fixed-rate (German-style) counterfactual?
+- nominal long-term annuity mortgages for three groups of borrowers;
+- banks that receive the extra interest;
+- a small member of a currency union.
 
-**Method.** Stylized facts disciplined with the Spanish Survey of Household Finances
-(EFF 2022) + a two-asset HANK model with discount-factor heterogeneity and a frozen
-ARM block, solved in sequence space (SSJ), plus an own empirical macro validation
-(recursive block-exogenous SVAR).
+## Main results
 
-**Headline (all reproduced by execution).** Spain transmits **~1.19×** what it would
-under the German fixed-rate structure; **~20%** of the Spanish consumption response to
-a +100 bp ECB shock is attributable to the variable-rate structure. The mechanism is a
-redistribution channel (Auclert 2019): the rate rise moves income from higher-MPC
-borrowers to lower-MPC creditors (banks → shareholders/foreign investors). The aggregate
-and distributional magnitudes, and their interpretation, are developed in the paper.
-
-## Results
-
-| Object | Value | Source |
+| Result | Value | Output |
 |---|---|---|
-| Household fit (loss) | 0.000004 | `calibrate.py` |
-| Variable group, +400 bp (impact) | −2.8% | `results.py` |
-| Variable group, observed Euribor path, 2024 | −2.4% | `results.py` |
-| Aggregate consumption IRF, +100 bp | −0.37% | `results.py` |
-| Counterfactual Spain / Germany | 1.19× (20% attributable) | `results.py` |
-| SVAR consumption, +100 bp (impact) | −0.27% | `svar.py` |
+| First-year response of consumption to a persistent 100 bp rise in the Euribor: Spanish contract mix / German mix / fixed rates only | −0.158% / −0.097% / −0.084% | `results.json`: `stylized.contract_line_impact` |
+| Contribution of the Spanish contracts, relative to fixed rates only | −0.074 pp (range −0.053 to −0.120 across shock persistence) | `robustness.json` |
+| Effect of the Spanish contract mix relative to the German one, 2023-2025 | about −0.3 pp a year | `results.json`: `episode.rates.*.spain_minus_germany_mix` |
+| Payment of the median borrower in 2023 | +3.0% of income (bank data: about +3 pp) | `results.json`: `episode.payment_change_median_borrower` |
+| Consumption of variable- relative to fixed-rate borrowers, 2023-2024 | −1.2% to −1.4% (bank data: −2.1% to −2.7%) | `results.json`: `episode.all.*.borrower_gap` |
 
-The micro anchor (−2.4% vs the BdE's −2.7%) is an **out-of-sample** validation — that
-number was never targeted. The SVAR (−0.27% impact, ≈−1% trough) confirms the GE
-multiplier is not inflated.
+`docs/number_to_script.md` maps every number in the paper to the file and key that contains it.
 
-## Reproduce
+## Reproducing the results
 
-You need Python 3 with the packages in `requirements.txt`. Install them and run the
-whole thing (works on Windows, macOS and Linux):
+Python 3.10 or later with the packages in `requirements.txt`:
 
 ```
 python -m pip install -r requirements.txt
 python run_all.py
 ```
 
-On Windows PowerShell, if `python`/`pip` are not found, use the launcher that ships with
-the python.org installer, or the environment you normally use for Python:
+`run_all.py` runs, in order:
 
-```
-py -m pip install -r requirements.txt
-py run_all.py
-```
+- the import content of consumption;
+- the VAR specifications and the local projections;
+- a check of the stored calibration;
+- the model experiments (`results.py`), the sensitivity analysis (`robustness.py`) and the numerical checks (`numerics.py`);
+- the figures.
 
-`run_all.py` takes a few minutes and prints, in order: the household calibration
-(`calibrate.py --refine`, ~1 min), the structural headlines (`results.py`:
-−2.8% / −2.4% / −0.37% / 1.19×), and the SVAR (`svar.py`: −0.27%, with figures written
-to `output/`). A Unix shell version, `run_all.sh`, is also provided.
+It takes about ten minutes, most of it computing the Jacobians of the household blocks. These are cached in `code/model/output/cache/`. Options:
 
-### Full replication from scratch (optional)
+- `--calibrate` re-solves the baseline and the three alternative calibrations, about 30 minutes more;
+- `--download` downloads the public data again;
+- `--tests` runs the tests.
 
-The committed `calibration/eff_targets.csv` lets everything above run without the survey
-microdata. To regenerate those moments from the raw EFF instead:
+The outputs `code/model/output/results.json` and `robustness.json` are identical bit for bit across the two environments tested (Python 3.10 with numpy 2.2, Python 3.13 with numpy 2.5). The VAR outputs differ by less than 1e-9.
 
-1. Request the EFF 2022 microdata from the Banco de España (see `DATA_AVAILABILITY.md`),
-   unzip it under `code/empirical/eff_moments/data/raw/`, and install R with `data.table`.
-2. Run the pipeline (one step — the cleaning is integrated; set `EFF_RAW_DIR` to read the
-   raw files from another location):
-   ```
-   cd code/empirical/eff_moments
-   Rscript eff_moments.R    # raw EFF -> targets, with replicate-weight + Rubin SEs
-   ```
-   Then copy `output/eff_targets.csv` over `calibration/eff_targets.csv`.
-3. For the full SMM search (~1.5 h) instead of the fast refine:
-   ```
-   cd code/model
-   python calibrate.py
-   ```
+The survey moments in `calibration/` come from the restricted EFF microdata. `DATA_AVAILABILITY.md` explains how to request the microdata and regenerate them (R for `eff_moments.R`, Python for `eff_exposure.py`).
 
 ## Layout
 
-- `calibration/` — single source of truth: `calibration.json` (all frozen parameters)
-  and `eff_targets.csv` (the EFF moments, each mapped to the object it disciplines).
-- `code/model/` — `config.py` (loads the JSON), `household.py`, `mortgage.py`,
-  `euribor.py`, `ge.py`, `results.py`, `calibrate.py`, and `_calib_common.py` (shared
-  calibration helpers). No parameter is hard-coded outside the JSON.
-- `code/model/exploration/` — calibration-design experiments (alternative target and
-  parameter sets, and robustness checks) that informed the final calibration. Not part of
-  the reproduction; kept for transparency.
-- `code/empirical/eff_moments/` — the R pipeline: `eff_moments.R` runs raw EFF → all
-  targets and facts (replicate-weight + Rubin SEs) in one step; `build_eff.R` provides the
-  cleaning it calls, and can be run alone to cache `data/clean/`.
-- `code/empirical/macro_svar/` — `svar.py`, the recursive SVAR.
-- `docs/number_to_script.md` — every paper number → the script that produces it.
-- `data/`, `output/` — see `DATA_AVAILABILITY.md`.
+| Path | Contents |
+|---|---|
+| `calibration/` | `eff_targets.csv` and `eff_exposure.csv` (EFF moments with standard errors), `calibration.json` (every model parameter), `alternatives/` (alternative calibrations used in the sensitivity analysis) |
+| `code/empirical/eff_moments/` | EFF pipeline: `build_eff.R`, `eff_functions.R`, `eff_moments.R`, `eff_exposure.py` |
+| `code/empirical/public_data/` | `download.py`: ECB, Eurostat and Jarociński-Karadi series |
+| `code/empirical/io/` | `import_content.py`: import content of household consumption from input-output tables |
+| `code/empirical/macro_svar/` | `svar.py` and `svar_annual.py`: VAR specifications of Appendix C |
+| `code/empirical/lp/` | `lp.py`: local projections with high-frequency shocks (reported as uninformative) |
+| `code/model/` | the model: `household.py` (two-asset household block), `mortgages.py` (annuity mortgages), `economy.py` (household population, steady states, Jacobians, moments), `equilibrium.py` (channels, banks, currency-union closure, expectations), `paths.py` (observed and identified paths), `config.py`, `calibrate.py`, `experiments.py`, `results.py`, `robustness.py`, `numerics.py`, `tests/` |
+| `code/figures/` | `make_figures.py` |
+| `data/` | public data (see `docs/sources.md`) |
+| `docs/` | `sources.md` (every input and its source), `number_to_script.md` |
 
-## Method notes and limitations
+## Notes
 
-- The household calibration matches four EFF moments (median liquid/income, median
-  illiquid/income, hand-to-mouth share, and the top-10% net-wealth share); the illiquid
-  return and the patient discount factor are set externally, and the annual MPC is not
-  targeted (reported alongside the fit). Household wealth is steep in the modal discount
-  factor, so `beta_modal` is stored to several decimals and re-pinned by `calibrate.py --refine`.
-- The steady-state mortgage payment uses the measured rate level (~2%); the ~1 pp margin
-  over Euribor enters only the interest-incidence narrative.
-- The German counterfactual uses the ECB MIR / ESRB stock variable-rate share (0.12).
-- The SVAR shows a mild euro-area-GDP output puzzle (an information-effect residual) that
-  does not affect the Spanish consumption response. The sign-restricted VAR and the
-  1-SD local-projection exercise are not part of this package (a different normalisation).
-- The transitory income component is calibrated to the MPC rather than measured; the debt
-  wedge and loan-to-value blocks are not identified here. See the paper's limitations.
+- Household, mortgage, bank and currency-union parameters are read from `calibration/calibration.json`. The settings of the experiments (paths of the shocks, the deposit pass-through of the stylized shock and the persistence of expectations) are in `code/model/paths.py` and `code/model/experiments.py`.
+- The test `tests/test_nesting.py` checks that the code reproduces an earlier version of the model to machine precision when its new features are switched off.
+- The model is linear around its steady state and shocks are unanticipated paths. The paper discusses what it leaves out: house prices, refinancing, contract choice and income incidence.

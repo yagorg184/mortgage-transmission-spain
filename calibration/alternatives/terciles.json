@@ -1,0 +1,155 @@
+{
+  "_about": "Single source of truth for the model. Household block produced by calibrate.py against calibration/eff_targets.csv and eff_exposure.csv; sources for external values in docs/sources.md.",
+  "household": {
+    "fixed": {
+      "eis": 0.5,
+      "rb": 0.0,
+      "ra": 0.035,
+      "chi0": 0.25,
+      "chi2": 2.0,
+      "tax": 0.0,
+      "w": 1.0,
+      "N": 1.0,
+      "kmax": 1,
+      "nB": 30,
+      "nK": 4,
+      "nZ": 5,
+      "nEps": 3,
+      "rho_z": 0.98,
+      "sig_eta": 0.08
+    },
+    "grids": {
+      "modal": {
+        "bmax": 50,
+        "amax": 200,
+        "nA": 50
+      },
+      "patient": {
+        "bmax": 50,
+        "amax": 1500,
+        "nA": 80
+      }
+    },
+    "types": [
+      {
+        "name": "modal",
+        "beta": 0.95108,
+        "mass": 0.948809
+      },
+      {
+        "name": "patient",
+        "beta": 0.964536,
+        "mass": 0.051191
+      }
+    ],
+    "chi1": 8.533147,
+    "sig_eps": 0.337328,
+    "modal_beta_shift": {
+      "tercile1": -0.004408,
+      "tercile2": -0.004775,
+      "tercile3": 0.000514
+    },
+    "stationarity_margin": 0.999,
+    "targets": {
+      "liquid_income_p50": 0.2632,
+      "illiquid_income_p50": 3.5555,
+      "htm_share": 0.22,
+      "htm_share_tercile1": 0.1514,
+      "htm_share_tercile2": 0.1511,
+      "htm_share_tercile3": 0.3119
+    },
+    "achieved": {
+      "liquid_income_p50": 0.2638,
+      "illiquid_income_p50": 3.5608,
+      "htm_share": 0.2204,
+      "htm_share_tercile1": 0.1519,
+      "htm_share_tercile2": 0.1515,
+      "htm_share_tercile3": 0.3123
+    },
+    "untargeted": {
+      "net_wealth_income_p50": 4.0828,
+      "htm_poor_share": 0.0067,
+      "htm_wealthy_share": 0.2137,
+      "net_wealth_top10_share": 0.6845,
+      "net_wealth_top1_share": 0.2199,
+      "mpc_annual": 0.2554,
+      "htm_share_none": 0.2262
+    },
+    "distribution_checks": {
+      "modal/none": {
+        "total": 1.000000000000003,
+        "min": 0.0,
+        "top_a": 8.335762048906527e-12,
+        "top_b": 0.0
+      },
+      "modal/tercile1": {
+        "total": 1.0000000000000022,
+        "min": 0.0,
+        "top_a": 2.3746026530263344e-16,
+        "top_b": 0.0
+      },
+      "modal/tercile2": {
+        "total": 1.000000000000009,
+        "min": 0.0,
+        "top_a": 1.4360231280339609e-16,
+        "top_b": 0.0
+      },
+      "modal/tercile3": {
+        "total": 1.0000000000000064,
+        "min": 0.0,
+        "top_a": 1.464569954017149e-10,
+        "top_b": 0.0
+      },
+      "patient/none": {
+        "total": 1.0000000000000426,
+        "min": 0.0,
+        "top_a": 1.3553505023219767e-14,
+        "top_b": 0.0
+      },
+      "patient/tercile1": {
+        "total": 0.9999999999999931,
+        "min": 0.0,
+        "top_a": 1.0352414160171101e-14,
+        "top_b": 0.0
+      },
+      "patient/tercile2": {
+        "total": 0.9999999999999845,
+        "min": 0.0,
+        "top_a": 9.163123285757435e-15,
+        "top_b": 0.0
+      },
+      "patient/tercile3": {
+        "total": 1.0000000000000178,
+        "min": 0.0,
+        "top_a": 6.909811552892603e-15,
+        "top_b": 0.0
+      }
+    }
+  },
+  "nominal": {
+    "inflation_ss": 0.02
+  },
+  "banks": {
+    "foreign_share": 0.5,
+    "corporate_tax": 0.3,
+    "policy_spread": 0.0097
+  },
+  "union": {
+    "import_share": 0.2519
+  },
+  "ge": {
+    "frisch": 1.0,
+    "kappa_w": 0.1,
+    "beta_w": 0.96
+  },
+  "country_variable_share_stock": {
+    "_source": "Spain: EFF 2022 (share of the outstanding dwelling-debt stock at variable rates). Euro area: ECB (2025). Germany, France, Italy: HFCS ranking (Ehrmann and Ziegelmeyer, 2017) and ECB MIR; read as ordinal.",
+    "all_fixed": 0.0,
+    "Germany": 0.12,
+    "France": 0.12,
+    "euro_area": 0.25,
+    "Italy": 0.45,
+    "Spain": 0.68,
+    "all_variable": 1.0
+  }
+}

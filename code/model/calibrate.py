@@ -1,148 +1,236 @@
 # calibrate.py
-# Production calibrator (exactly-identified 4-vs-4 design) and assembler of the
-# frozen parameter set in calibration.json. This is the single calibrator the
-# replication driver uses; the calib_*.py scripts in this folder are the
-# exploration record (mpc-free, more-targets, fewer-params, three-type, 5v5) that
-# led here.
+# Household calibration on the full population: households without a mortgage and
+# mortgagors in three terciles of dwelling debt relative to income, each paying the
+# steady-state annuity on its tercile's median balance, term and rate (EFF 2022).
 #
-#   python calibrate.py            full SMM (differential evolution, seed 0)
-#   python calibrate.py --refine   re-pin the modal discount factor from the
-#                                  current calibration.json (deterministic, fast)
+# Parameters: the discount factors of the modal and the patient type, the share of
+# patient households, the adjustment-cost scale, the dispersion of transitory
+# income and, optionally, a shift of the modal discount factor in each mortgage
+# group. Targets: the medians of liquid and illiquid wealth relative to income,
+# the hand-to-mouth share and the top-10% share of net worth, plus, in the
+# tercile calibration, the hand-to-mouth share of each tercile of mortgagors.
 #
-# Design: free {beta_modal, pi_modal, chi1, sig_eps}; external ra and beta_patient
-# (see below); targets {liquid p50, illiquid p50, HtM, top-10% net-wealth share}
-# read from calibration/eff_targets.csv. The MPC is not targeted; it and the
-# poor/wealthy-HtM split and the top-1% net-wealth share are computed and
-# reported for reference.
+# The patient type must satisfy beta_p (1 + r_a) < 1 for its wealth distribution
+# to be stationary. The bound is tightened to beta_p (1 + r_a) <= 0.999, so that
+# the calibration does not rely on households arbitrarily close to an explosive
+# accumulation path, and every steady state is checked to be a proper
+# distribution that the asset grids do not truncate.
+#
+# In the baseline the five common parameters are matched to the four
+# population moments, which leaves one direction unidentified (a less patient
+# top type with a larger population share produces the same moments); the
+# option --beta-patient fixes the patient discount factor at other points of
+# that set. The option --terciles keeps the patient type of the baseline, frees
+# the three group shifts and replaces the top-10% share by the three tercile
+# targets: with the shifts, the top share peaks below its data value as a
+# function of the patient share, so the variant reports it as untargeted.
+#
+# Usage:
+#   python calibrate.py                        baseline, writes calibration/calibration.json
+#   python calibrate.py --check [FILE]         moments at a stored calibration
+#   python calibrate.py --beta-patient 0.962   alternative point, calibration/alternatives/bp0.962.json
+#   python calibrate.py --terciles             tercile calibration, calibration/alternatives/terciles.json
 
-import os, json, argparse
+import argparse
+import json
+import os
+import time
+
 import numpy as np
-import pandas as pd
-from scipy.optimize import differential_evolution, minimize_scalar
-import _calib_common as CC
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-CAL = os.path.normpath(os.path.join(HERE, "..", "..", "calibration"))
-JSON = os.path.join(CAL, "calibration.json")
+import config as CF
+import economy as EC
 
-# ---- externally fixed (not calibrated) ---------------------------------------
-# ra: real net return on the housing-heavy illiquid portfolio (BdE rental yield +
-#     Jorda et al.); set externally rather than calibrated.
-# beta_patient: the patient (accumulating) type, beta*(1+ra) ~ 1.016; set externally.
-RA = 0.035
-BETA_PAT = 0.981
+POPULATION_TARGETS = ["liquid_income_p50", "illiquid_income_p50", "htm_share", "net_wealth_top10_share"]
+GROUPS = ["tercile1", "tercile2", "tercile3"]
+TERCILE_TARGETS = [f"htm_share_{g}" for g in GROUPS]
+NAMES = ["beta_modal", "beta_patient", "patient_share", "chi1", "sig_eps"] + [f"shift_{g}" for g in GROUPS]
 
-# free params {beta_modal, pi_modal, chi1, sig_eps}; bounds narrowed around the
-# known region (illiquid wealth is steep in beta_modal).
-BOUNDS = [(0.950, 0.958), (0.92, 0.985), (5.0, 8.0), (0.28, 0.42)]
-TARGETS = [("liquid_income_p50", 1.0), ("illiquid_income_p50", 0.8),
-           ("htm_share", 1.0), ("net_wealth_top10_share", 1.0)]
+# Conventions and external values (sources in docs/sources.md).
+HOUSEHOLD_FIXED = dict(eis=0.5, rb=0.0, ra=0.035, chi0=0.25, chi2=2.0, tax=0.0, w=1.0, N=1.0,
+                       kmax=1, nB=30, nK=4, nZ=5, nEps=3, rho_z=0.98, sig_eta=0.08)
+GRIDS = {"modal": dict(bmax=50, amax=200, nA=50), "patient": dict(bmax=50, amax=1500, nA=80)}
+STATIONARITY_MARGIN = 0.999
 
-# blocks that are not part of the household SMM. amort is derived from the EFF
-# residual term (Eq. below), not a free constant.
-INCIDENCE = dict(beta_dep=0.32, mpc_shareholder=0.05, lambda_ext=0.50)
-COUNTRY = {"all_fixed": 0.0, "Germany": 0.12, "France": 0.12, "euro_area": 0.25,
-           "Italy": 0.45, "Spain": 0.70, "all_variable": 1.0}
+START = [0.951118, 0.964506, 0.054537, 7.41633, 0.34527, 0.0, 0.0, 0.0]
+TERCILE_START = [0.95108, 0.964536, 0.051191, 8.533147, 0.337328, -0.004408, -0.004775, 0.000514]
+TERCILE_TOL = 5e-3      # the tercile shares have standard errors of 13-16 percent of their value
+STEPS = np.array([2e-4, 2e-4, 0.005, 0.1, 0.005, 2e-4, 2e-4, 2e-4])
 
 
-def unpack(x):
-    bm, pim, chi1, se = x
-    if BETA_PAT < bm:
-        return None
-    return ([bm, BETA_PAT], [pim, 1 - pim], chi1, se, RA)
+def data_targets():
+    t = {k: float(CF.EFF[k]) for k in POPULATION_TARGETS}
+    for k, g in enumerate(GROUPS, start=1):
+        t[f"htm_share_{g}"] = float(CF.EXPOSURE[f"t{k}_htm_share"])
+    return t
 
 
-LOSS = CC.Objective(TARGETS, unpack)
+def population(z):
+    beta_m, beta_p, pi_p, chi1, sig_eps = z[:5]
+    shift = {g: z[5 + k] for k, g in enumerate(GROUPS)} if np.any(np.asarray(z[5:]) != 0) else None
+    return CF.household_population([beta_m, beta_p, pi_p, sig_eps], HOUSEHOLD_FIXED, GRIDS, chi1=chi1,
+                                   modal_beta_shift=shift)
 
 
-def run_smm(maxiter=120, popsize=16):
-    res = differential_evolution(LOSS, BOUNDS, maxiter=maxiter, popsize=popsize,
-                                 tol=1e-6, seed=0, polish=True, disp=True,
-                                 mutation=(0.5, 1.0), recombination=0.7)
-    return res.x, res.fun
+def model_moments(z, check=True):
+    hh, types, groups = population(z)
+    cells = EC.solve_cells(hh, types, groups, check=check)
+    m = EC.moments(cells, types, groups)
+    for g, row in EC.moments_by_group(cells, types, groups).items():
+        m[f"htm_share_{g}"] = row["htm_share"]
+    return m, cells
 
 
-def run_refine():
-    """Re-pin only the modal discount factor (the steep, wealth-pinning parameter)
-    from the current calibration.json, holding the rest."""
-    h = json.load(open(JSON))["household"]
-    bm0, pim, chi1, se = h["beta"][0], h["pi"][0], h["chi1"], h["sig_eps"]
-    r = minimize_scalar(lambda bm: LOSS([bm, pim, chi1, se]),
-                        bounds=(bm0 - 0.003, bm0 + 0.003), method="bounded",
-                        options={"xatol": 1e-8})
-    return [r.x, pim, chi1, se], r.fun
+def residuals(z, targets):
+    data = data_targets()
+    try:
+        m, _ = model_moments(z)
+    except RuntimeError:
+        return np.full(len(targets), 10.0)
+    return np.array([(m[k] - data[k]) / data[k] for k in targets])
 
 
-def assemble(x, lossval):
-    bm = round(x[0], 8)           # steep in illiquid -> kept to 8 decimals
-    pim, chi1, se = round(x[1], 6), round(x[2], 6), round(x[3], 6)
-    betas, pis = [bm, BETA_PAT], [pim, round(1 - pim, 6)]
-    m = CC.solve_moments(betas, pis, chi1, se, RA)
-    t = pd.read_csv(os.path.join(CAL, "eff_targets.csv")).drop_duplicates("key").set_index("key")["value"]
+def solve(z0, targets, free, tol=2e-3, max_iter=30):
+    """Gauss-Newton iterations with forward-difference derivatives over the
+    parameters flagged in `free`. When there are more free parameters than
+    targets, each step is the minimum-norm solution of the linearised system.
+    Steps are halved until the largest relative miss falls. Iterations stop once
+    every target is matched within `tol` (0.2 percent, inside the EFF sampling
+    error of each moment), or when no step along the Gauss-Newton direction
+    reduces the largest miss."""
+    free = np.asarray(free, bool)
+    ra = HOUSEHOLD_FIXED["ra"]
+    bmax = STATIONARITY_MARGIN / (1 + ra)
+    lo = np.array([0.90, 0.90, 0.01, 1.0, 0.10, -0.02, -0.02, -0.02])
+    hi = np.array([bmax, bmax, 0.30, 20.0, 0.80, 0.02, 0.02, 0.02])
+    z = np.array(z0, float)
+    r = residuals(z, targets)
+    t0 = time.time()
+    for it in range(max_iter):
+        err = np.max(np.abs(r))
+        print(f"  [{(time.time() - t0) / 60:5.1f} min] iter {it:2d}  z = {np.round(z, 6)}  res = {np.round(r, 5)}",
+              flush=True)
+        if err < tol:
+            break
+        J = np.zeros((len(r), len(z)))
+        for k in np.flatnonzero(free):
+            step = STEPS[k] if z[k] + STEPS[k] <= hi[k] else -STEPS[k]
+            zk = z.copy()
+            zk[k] += step
+            J[:, k] = (residuals(zk, targets) - r) / step
+        scale = STEPS * 10 * free
+        dz = scale * np.linalg.lstsq(J * scale, -r, rcond=None)[0]
+        lam = 1.0
+        while lam > 1 / 64:
+            zn = np.clip(z + lam * dz, lo, hi)
+            rn = residuals(zn, targets)
+            if np.max(np.abs(rn)) < err:
+                break
+            lam /= 2
+        else:
+            print("  no step reduces the largest miss; stopping", flush=True)
+            break
+        z, r = zn, rn
+    return z, r
+
+
+def import_share(year=2021):
+    """Import content of household consumption from the input-output tables
+    (code/empirical/io/import_content.py)."""
+    import pandas as pd
+    path = os.path.normpath(os.path.join(CF.HERE, "..", "empirical", "io", "output", "import_content.csv"))
+    t = pd.read_csv(path).set_index("year")
+    return round(float(t.loc[year, "total"]), 4)
+
+
+def assemble(z, m, cells, targets):
+    hh, types, groups = population(z)
+    diag = {f"{types[j]['name']}/{groups[g]['name']}": c["diag"] for (j, g), c in cells.items()}
+    data = data_targets()
     r4 = lambda v: round(float(v), 4)
-    rm = round(float(t["mortgage_rate_level_p50"]) / 100, 4)   # measured mortgage rate
-    nyr = float(t["mortgage_term_p50"])                        # measured residual term (years)
+    household = {
+        "fixed": HOUSEHOLD_FIXED,
+        "grids": GRIDS,
+        "types": [dict(name=t["name"], beta=round(float(t["beta"]), 8), mass=round(float(t["mass"]), 8))
+                  for t in types],
+        "chi1": round(float(z[3]), 6),
+        "sig_eps": round(float(z[4]), 6),
+    }
+    if np.any(np.asarray(z[5:]) != 0):
+        household["modal_beta_shift"] = {g: round(float(z[5 + k]), 8) for k, g in enumerate(GROUPS)}
+    household.update({
+        "stationarity_margin": STATIONARITY_MARGIN,
+        "targets": {k: r4(data[k]) for k in targets},
+        "achieved": {k: r4(m[k]) for k in targets},
+        "untargeted": {k: r4(v) for k, v in m.items() if k not in targets},
+        "distribution_checks": diag,
+    })
     return {
-        "_about": "Single source of truth for the calibrated model. All model scripts read parameters from here; produced by calibrate.py (exactly-identified 4v4 design) against calibration/eff_targets.csv.",
-        "household": {
-            "beta": [bm, BETA_PAT],
-            "pi": [pim, round(1 - pim, 6)],
-            "chi1": chi1, "sig_eps": se, "ra": RA,
-            "_external": "ra and beta_patient are set externally, not calibrated. ra = real net return on the housing-heavy illiquid portfolio; beta_patient = the patient (accumulating) type, beta*(1+ra)~1.016.",
-            "fixed": {k: CC.H.BASE[k] for k in ("eis", "rb", "chi0", "chi2", "rho_z", "sig_eta")},
-            "grid": {k: CC.H.BASE[k] for k in ("nB", "nA", "nK", "nZ", "nEps", "bmax", "amax", "kmax")},
-            "targets": {"liquid_income_p50": r4(t["liquid_income_p50"]),
-                        "illiquid_income_p50": r4(t["illiquid_income_p50"]),
-                        "htm_share": r4(t["htm_share"]),
-                        "net_wealth_top10_share": r4(t["net_wealth_top10_share"])},
-            "achieved": {"liquid_income_p50": round(m["liquid_income_p50"], 4),
-                         "illiquid_income_p50": round(m["illiquid_income_p50"], 4),
-                         "htm_share": round(m["htm_share"], 4),
-                         "net_wealth_top10_share": round(m["net_wealth_top10_share"], 4)},
-            "untargeted": {"mpc_annual": round(m["mpc_annual"], 4),
-                           "net_wealth_income_p50": round(m["net_wealth_income_p50"], 4),
-                           "htm_wealthy_share": round(m["htm_wealthy_share"], 4),
-                           "htm_poor_share": round(m["htm_poor_share"], 4),
-                           "net_wealth_top1_share": round(m["net_wealth_top1_share"], 4),
-                           "_note": "MPC is not targeted; it, the poor/wealthy-HtM split, the net-wealth median and the top-1% net-wealth share are computed and reported for reference (not targeted)."},
-            "loss": round(lossval, 6),
-            "_note_precision": "beta_modal is steep in the illiquid moment; stored to 8 decimals and re-pinned by --refine.",
-        },
-        "mortgage": {
-            "mortgage_share": r4(t["mortgage_share"]),
-            "variable_share": r4(t["variable_share_among_mortgaged"]),
-            "M_var_income_exposed": r4(t["Mvar_income_p50_exposed"]),
-            "rate_level": rm,
-            "spread_over_euribor_2022": round(float(t["spread_over_euribor1Y_2022"]) / 100, 4),
-            "term_years": nyr,
-            # annuity amortisation implied by the EFF residual term:
-            # p=(r_m+amort)M with p the level annuity => amort = r_m/(1-(1+r_m)^-n) - r_m
-            "amort": round(rm / (1 - (1 + rm) ** (-nyr)) - rm, 4),
-        },
-        "incidence": INCIDENCE,
-        "country_variable_share_stock_2022": {
-            "_source": "Spain: EFF 2022. Euro area: ECB (2025, pure-ARM stock ~25%). Germany/Italy/France: ~2022, consistent with the ECB ordering and the HFCS cross-country ranking (Ehrmann-Ziegelmeyer, ECB WP 1631). See docs/sources.md.",
-            **COUNTRY},
-        "notes": [
-            "Steady-state mortgage payment uses the measured rate_level; spread_over_euribor_2022 is the margin over Euribor, used only in the incidence narrative.",
-            "Germany's counterfactual uses the ECB MIR / ESRB stock variable-rate share (0.12).",
-            "Household calibration is the exactly-identified 4v4 design; see household._note_precision and exploration/calib_E_4v4.py.",
-        ],
+        "_about": "Single source of truth for the model. Household block produced by calibrate.py against "
+                  "calibration/eff_targets.csv and eff_exposure.csv; sources for external values in docs/sources.md.",
+        "household": household,
+        "nominal": {"inflation_ss": 0.02},
+        "banks": {"foreign_share": 0.50, "corporate_tax": 0.30,
+                  "policy_spread": round(float(CF.EFF["spread_over_euribor1Y_2022"]) / 100, 4)},
+        "union": {"import_share": import_share()},
+        "ge": {"frisch": 1.0, "kappa_w": 0.1, "beta_w": 0.96},
+        "country_variable_share_stock": {
+            "_source": "Spain: EFF 2022 (share of the outstanding dwelling-debt stock at variable rates). Euro "
+                       "area: ECB (2025). Germany, France, Italy: HFCS ranking (Ehrmann and Ziegelmeyer, 2017) "
+                       "and ECB MIR; read as ordinal.",
+            "all_fixed": 0.0, "Germany": 0.12, "France": 0.12, "euro_area": 0.25,
+            "Italy": 0.45, "Spain": 0.68, "all_variable": 1.0},
     }
 
 
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--refine", action="store_true", help="fast modal-beta refinement instead of the full SMM")
-    args = ap.parse_args()
+def stored_vector(path):
+    cal, hh, types, groups = CF.load(path)
+    h = cal["household"]
+    shift = h.get("modal_beta_shift", {})
+    return [types[0]["beta"], types[1]["beta"], types[1]["mass"], h["chi1"], h["sig_eps"]] + \
+        [shift.get(g, 0.0) for g in GROUPS]
 
-    x, lossval = run_refine() if args.refine else run_smm()
-    out = assemble(x, lossval)
-    with open(JSON, "w") as f:
-        json.dump(out, f, indent=2, ensure_ascii=False)
-    h = out["household"]
-    print(f"\nbeta_modal = {h['beta'][0]}  loss = {h['loss']}")
-    print(f"achieved:   {h['achieved']}")
-    print(f"untargeted: MPC {h['untargeted']['mpc_annual']} (validation)  "
-          f"poor-HtM {h['untargeted']['htm_poor_share']}  top1 {h['untargeted']['net_wealth_top1_share']}")
-    print(f"wrote {JSON}")
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", nargs="?", const=CF.JSON, default=None)
+    ap.add_argument("--beta-patient", type=float, default=None)
+    ap.add_argument("--terciles", action="store_true")
+    args = ap.parse_args()
+    out_dir = CF.ALTERNATIVES
+    if args.check:
+        z = stored_vector(args.check)
+        m, _ = model_moments(z)
+        data = data_targets()
+        for k in POPULATION_TARGETS + TERCILE_TARGETS:
+            print(f"  {k:24s} model {m[k]:.4f}   EFF {data[k]:.4f}")
+        return
+    tol = 2e-3
+    if args.terciles:
+        z0 = list(TERCILE_START)
+        targets = [k for k in POPULATION_TARGETS if k != "net_wealth_top10_share"] + TERCILE_TARGETS
+        free = [True, False, False, True, True, True, True, True]
+        path = os.path.join(out_dir, "terciles.json")
+        tol = TERCILE_TOL
+    elif args.beta_patient is not None:
+        z0 = list(START)
+        z0[1] = args.beta_patient
+        targets = POPULATION_TARGETS
+        free = [True, False, True, True, True, False, False, False]
+        path = os.path.join(out_dir, f"bp{args.beta_patient}.json")
+    else:
+        z0 = list(START)
+        targets = POPULATION_TARGETS
+        free = [True, True, True, True, True, False, False, False]
+        path = CF.JSON
+    os.makedirs(out_dir, exist_ok=True)
+    z, rres = solve(z0, targets, free, tol=tol)
+    m, cells = model_moments(z)
+    cal = assemble(z, m, cells, targets)
+    with open(path, "w") as f:
+        json.dump(cal, f, indent=2)
+    print(f"\nresiduals = {np.round(rres, 5)}; wrote {path}")
+
+
+if __name__ == "__main__":
+    main()
