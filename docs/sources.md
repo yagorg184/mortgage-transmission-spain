@@ -42,9 +42,9 @@ replicate weights; standard errors combine both by Rubin's rules.
 
 | Object | Value | Source |
 |---|---|---|
-| Spending of variable- relative to fixed-rate borrowers | −1.2 / −2.1 / −2.5% at 6 / 12 / 18 months after the first payment revision; −2.7% in 2024Q1; −1.0% in December 2025 | Mestres Domènech, García Arenas, Graziano and Alcobé Garcia, CaixaBank Research, 10 April 2026. Staggered difference-in-differences on CaixaBank customers with a single mortgage; spending measured from card payments, direct debits and cash withdrawals. |
+| Spending of variable- relative to fixed-rate borrowers | -1.2 / -2.1 / -2.5% at 6 / 12 / 18 months after the first payment revision; -2.7% in 2024Q1; -1.0% in December 2025 | Mestres Domènech, García Arenas, Graziano and Alcobé Garcia, CaixaBank Research, 10 April 2026. Staggered difference-in-differences on CaixaBank customers with a single mortgage; spending measured from card payments, direct debits and cash withdrawals. |
 | Change in the median debt-service ratio of variable-rate borrowers | close to +3 pp, March 2022 to July 2024 | idem |
-| Spending response to the payment cuts of late 2025 | about three-quarters of the fall in payments (median payment −40 euros, spending +30 euros) | idem |
+| Spending response to the payment cuts of late 2025 | about three-quarters of the fall in payments (median payment -40 euros, spending +30 euros) | idem |
 | Response of consumption to adjustable-rate payment increases | about half of the increase in interest payments for high-debt borrowers | Flodén, Kilström, Sigurdsson and Vestman (2021). |
 
 ## Time series

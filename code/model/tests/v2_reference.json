@@ -1,5 +1,5 @@
 {
-  "_about": "Parameters and headline outputs of the first version of the model (git tag v2-baseline), used to check that the current code nests it exactly.",
+  "_about": "Parameters and headline outputs of the previous version of the model (git tag v2), used to check that the current code nests it exactly.",
   "household": {"eis": 0.5, "rb": 0.0, "ra": 0.035, "chi0": 0.25, "chi1": 6.795054, "chi2": 2.0, "tax": 0.0,
                 "w": 1.0, "N": 1.0, "bmax": 50, "amax": 80, "kmax": 1, "nB": 30, "nA": 40, "nK": 4, "nZ": 5,
                 "nEps": 3, "rho_z": 0.98, "sig_eta": 0.08, "sig_eps": 0.354524},

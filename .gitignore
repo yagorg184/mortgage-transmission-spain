@@ -1,4 +1,4 @@
-# ---- EFF microdata (Banco de España): NOT redistributable — never commit ----
+# ---- EFF microdata (Banco de España): not redistributable, never commit ----
 data/eff_raw/
 data/eff_clean/
 **/seccion6_*.csv

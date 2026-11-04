@@ -13,11 +13,11 @@ calibrated to the Spanish Survey of Household Finances (EFF 2022), with:
 
 | Result | Value | Output |
 |---|---|---|
-| First-year response of consumption to a persistent 100 bp rise in the Euribor: Spanish contract mix / German mix / fixed rates only | −0.158% / −0.097% / −0.084% | `results.json`: `stylized.contract_line_impact` |
-| Contribution of the Spanish contracts, relative to fixed rates only | −0.074 pp (range −0.053 to −0.120 across shock persistence) | `robustness.json` |
-| Effect of the Spanish contract mix relative to the German one, 2023-2025 | about −0.3 pp a year | `results.json`: `episode.rates.*.spain_minus_germany_mix` |
+| First-year response of consumption to a persistent 100 bp rise in the Euribor: Spanish contract mix / German mix / fixed rates only | -0.158% / -0.097% / -0.084% | `results.json`: `stylized.contract_line_impact` |
+| Contribution of the Spanish contracts, relative to fixed rates only | -0.074 pp (range -0.053 to -0.120 across shock persistence) | `robustness.json` |
+| Effect of the Spanish contract mix relative to the German one, 2023-2025 | about -0.3 pp a year | `results.json`: `episode.rates.*.spain_minus_germany_mix` |
 | Payment of the median borrower in 2023 | +3.0% of income (bank data: about +3 pp) | `results.json`: `episode.payment_change_median_borrower` |
-| Consumption of variable- relative to fixed-rate borrowers, 2023-2024 | −1.2% to −1.4% (bank data: −2.1% to −2.7%) | `results.json`: `episode.all.*.borrower_gap` |
+| Consumption of variable- relative to fixed-rate borrowers, 2023-2024 | -1.2% to -1.4% (bank data: -2.1% to -2.7%) | `results.json`: `episode.all.*.borrower_gap` |
 
 `docs/number_to_script.md` maps every number in the paper to the file and key that contains it.
 
@@ -66,5 +66,6 @@ The survey moments in `calibration/` come from the restricted EFF microdata. `DA
 ## Notes
 
 - Household, mortgage, bank and currency-union parameters are read from `calibration/calibration.json`. The settings of the experiments (paths of the shocks, the deposit pass-through of the stylized shock and the persistence of expectations) are in `code/model/paths.py` and `code/model/experiments.py`.
-- The test `tests/test_nesting.py` checks that the code reproduces an earlier version of the model to machine precision when its new features are switched off.
+- The test `tests/test_nesting.py` checks that the code reproduces the previous version of the model (git tag `v2`) to machine precision when its new features are switched off.
 - The model is linear around its steady state and shocks are unanticipated paths. The paper discusses what it leaves out: house prices, refinancing, contract choice and income incidence.
+- The code is released under the MIT License (`LICENSE`). The data in `data/` and the EFF moments in `calibration/` remain subject to the terms of their sources (`docs/sources.md`, `DATA_AVAILABILITY.md`).

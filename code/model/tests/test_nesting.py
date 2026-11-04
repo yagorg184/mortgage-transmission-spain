@@ -1,5 +1,5 @@
-"""The current code, with every new feature switched off, reproduces the first
-version of the model (tag v2-baseline) to machine precision."""
+"""The current code, with every new feature switched off, reproduces the previous
+version of the model (git tag v2) to machine precision."""
 
 import json
 import os

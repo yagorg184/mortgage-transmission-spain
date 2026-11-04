@@ -15,7 +15,7 @@ in the first year after the shock, or in 2022 for the episode.
 | Variable-rate share of the balance 0.680 | `eff_exposure.csv`: `variable_share_of_stock` |
 | Tercile cut points 1.01 and 2.09; tercile medians of debt/income, rate, term, DSR; variable-rate and hand-to-mouth shares by tercile; all mortgagors | `eff_exposure.csv`: `tercile_cut_*`, `t{1,2,3}_*`, `tot_income_p50_mortgagors`, `dsr_p50_mortgagors`, `htm_share_mortgagors`, `check_variable_share_among_mortgaged` |
 | Liquid, illiquid and net worth medians; top shares; hand-to-mouth shares; H0 and H1; DSR above 40% | `eff_targets.csv`: `liquid_income_p50`, `illiquid_income_p50`, `net_wealth_income_p50`, `net_wealth_top{10,1}_share`, `htm_*`, `dsr_over40_*` |
-| Euribor −0.49 (2021) and 3.87 (2023); deposit rate 0.02, 0.22, 0.48; inflation 8.0 and 3.3 | `results.json`: `facts.annual_percent` |
+| Euribor -0.49 (2021) and 3.87 (2023); deposit rate 0.02, 0.22, 0.48; inflation 8.0 and 3.3 | `results.json`: `facts.annual_percent` |
 | Deposit pass-through 5% (2023) and 12% (2024) | `results.json`: `facts.deposit_pass_through_since_2021` |
 | Overnight share of deposits 90% and 85%; overnight rate below 0.2%; new time deposits 2.4% | `results.json`: `facts.overnight_share_of_deposits`, `facts.overnight_rate_max_2022_2025`, `facts.new_time_deposit_rate_2024` |
 | Figure 1 | `code/figures/make_figures.py`, `fig_rates` |
@@ -39,11 +39,11 @@ in the first year after the shock, or in 2022 for the episode.
 
 | Number in the paper | Source |
 |---|---|
-| −0.158, −0.123, −0.101 | `results.json`: `stylized.total_first3` |
+| -0.158, -0.123, -0.101 | `results.json`: `stylized.total_first3` |
 | Table 4 | `results.json`: `stylized.direct_impact_by_channel`, `stylized.ge_impact_by_channel`, `stylized.direct_impact_total` |
 | Multiplier 1.7 | `results.json`: `stylized.ge_multiplier_impact` |
 | Deposit margin offsets 15% of repricing; revaluation effect tripled | ratios of entries of `stylized.ge_impact_by_channel` and `stylized.direct_impact_by_channel` |
-| Equation (12): −0.084 and −0.106 | `results.json`: `stylized.contract_line_impact.fixed_only`, and `variable_only` minus `fixed_only` |
+| Equation (12): -0.084 and -0.106 | `results.json`: `stylized.contract_line_impact.fixed_only`, and `variable_only` minus `fixed_only` |
 | Mortgage-margin offset about a tenth of the slope | `results.json`: `stylized.ge_impact_by_channel_fixed_only.bank_mortgage` and `ge_impact_by_channel_variable_only.bank_mortgage` |
 | Table 5 | `results.json`: `stylized.contract_line_first3` |
 | Ratio 1.64; 0.062 and 0.074 pp; 47%; 1.7 in year 3; 1.67 and 1.51 for a German share of 0.10 or 0.20 | computed from `stylized.contract_line_impact` and `stylized.contract_line_first3` |
@@ -72,7 +72,7 @@ in the first year after the shock, or in 2022 for the episode.
 | Linearization errors 2.7%, 6.0%, 9.5% | `results.json`: `mortgage_linearization_error` |
 | Grids, income states, horizon | `calibration.json`: `household.fixed`, `household.grids`; `results.json`: `T` |
 | Mass on the last node below 1e-11; horizon doubling changes the response by less than 1e-4 | `numerics.json`: `max_mass_last_illiquid_node`, `max_abs_change_first5_years_when_horizon_doubles` |
-| Closed economy: present value 0.98, condition numbers 119 and 276, responses −0.815 and −0.823 | `numerics.json`: `T200`, `T400` |
+| Closed economy: present value 0.98, condition numbers 119 and 276, responses -0.815 and -0.823 | `numerics.json`: `T200`, `T400` |
 | Final calibration misses below 0.04% | `calibration.json`: `household.targets`, `household.achieved` |
 | Table 7 (VAR specifications and the model) | `results.json`: `svar.*`; `code/empirical/macro_svar/output/svar_annual_*.csv` |
 | Internal instrument: +2.93 in year 1 | `svar_annual_internal.csv` |
